@@ -42,6 +42,7 @@ async def startup():
 
 class EstimateResponse(BaseModel):
     status: str
+    description: Optional[str] = None
     estimate: Optional[dict] = None
     rejection: Optional[str] = None
     warnings: list[str] = []
