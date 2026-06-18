@@ -21,7 +21,7 @@ async def build_quote(
     skill_def: dict,
 ) -> dict:
     if not settings.openai_api_key:
-        return _flat_quote_fallback(services_list, price_book)
+        return _flat_quote_fallback(services_list, price_book, error_message="No OpenAI API key configured.")
 
     pricing_json = json.dumps(price_book, indent=2, default=str)
     services_json = json.dumps(services_list)
@@ -73,7 +73,7 @@ async def build_quote(
         return result
     except Exception as e:
         logger.error("LLM quote generation failed: %s", e)
-        return _flat_quote_fallback(services_list, price_book)
+        return _flat_quote_fallback(services_list, price_book, error_message=str(e))
 
 
 def _quote_prompt(services_json: str, pricing_json: str, skill_def: dict) -> str:
@@ -119,7 +119,7 @@ If you cannot estimate any of the requested services, return rejection with an e
 """
 
 
-def _flat_quote_fallback(services_list: list[str], price_book: list[dict]) -> dict:
+def _flat_quote_fallback(services_list: list[str], price_book: list[dict], error_message: str = None) -> dict:
     items = []
     total = 0
 
@@ -163,13 +163,17 @@ def _flat_quote_fallback(services_list: list[str], price_book: list[dict]) -> di
     svc_names = ", ".join(i.get("label", i.get("service", "")) for i in items if "error" not in i)
     description = f"Auto-estimate for {len(items)} service(s): {svc_names}. Estimated total ${total}."
 
+    warning_msg = "AI analysis unavailable -- used default brackets."
+    if error_message:
+        warning_msg += f" (Error: {error_message})"
+
     return {
         "itemized_quote": items,
         "description": description,
         "total": total,
         "total_low": total,
         "total_high": total,
-        "warnings": ["AI analysis unavailable -- used default brackets."],
+        "warnings": [warning_msg],
         "rejection": None,
     }
 
