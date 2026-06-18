@@ -12,7 +12,7 @@ logger = logging.getLogger("bidagent.validator")
 
 def validate_estimate_request(
     requested_services: str,
-    images: list[UploadFile],
+    images: list[dict],
     skill_def: dict,
 ) -> None:
     """Raise ValueError if the request can't be processed."""
@@ -34,11 +34,21 @@ def validate_estimate_request(
         raise ValueError(f"A maximum of {max_photos} photos is allowed.")
 
     for img in images:
-        if img.content_type and img.content_type not in allowed_formats:
+        if isinstance(img, dict):
+            content_type = img.get("content_type")
+            filename = img.get("filename", "photo.jpg")
+            size = img.get("size")
+        else:
+            content_type = getattr(img, "content_type", None)
+            filename = getattr(img, "filename", "photo.jpg")
+            size = getattr(img, "size", None)
+
+        if content_type and content_type not in allowed_formats:
             raise ValueError(
-                f"Photo '{img.filename}' has an unsupported format "
-                f"({img.content_type}). Allowed: {', '.join(allowed_formats)}."
+                f"Photo '{filename}' has an unsupported format "
+                f"({content_type}). Allowed: {', '.join(allowed_formats)}."
             )
         # Check file isn't empty
-        if img.size is not None and img.size == 0:
-            raise ValueError(f"Photo '{img.filename}' appears to be empty.")
+        if size is not None and size == 0:
+            raise ValueError(f"Photo '{filename}' appears to be empty.")
+

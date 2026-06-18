@@ -7,6 +7,7 @@ CRM is the canonical list of services; YAML provides the pricing structure.
 """
 
 import logging
+import re
 from typing import Any
 
 import httpx
@@ -14,6 +15,16 @@ import httpx
 from src.config import settings
 
 logger = logging.getLogger("bidagent.price")
+
+
+def _parse_base_price(base_price_str: str) -> float | None:
+    if not base_price_str:
+        return None
+    # Find all digits in the string
+    match = re.search(r'\d+', base_price_str.replace(',', ''))
+    if match:
+        return float(match.group(0))
+    return None
 
 
 async def load_or_fetch_price_book(skill_def: dict) -> list[dict]:
@@ -61,6 +72,12 @@ async def load_or_fetch_price_book(skill_def: dict) -> list[dict]:
             entry["flat_rate"] = yml["flat_rate"]
         elif "brackets" in yml:
             entry["brackets"] = yml["brackets"]
+        else:
+            # Fallback to CRM basePrice parsed as flat rate
+            parsed = _parse_base_price(svc.get("basePrice", ""))
+            if parsed is not None:
+                entry["flat_rate"] = {"low": parsed, "high": parsed}
+
         book.append(entry)
 
     logger.info("Price book: %d services (CRM base + YAML brackets)", len(book))
@@ -78,3 +95,4 @@ def _yaml_to_book(yaml_services: dict) -> list[dict]:
             entry["brackets"] = svc["brackets"]
         book.append(entry)
     return book
+

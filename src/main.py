@@ -1,14 +1,13 @@
-"""
-BidAgent: AI-powered instant cost estimating engine.
-"""
-
 import logging
+import posixpath
 from pathlib import Path
+from urllib.parse import urlparse
+from typing import Optional
 
+import httpx
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
 
 from src.config import settings
 from src.skill_loader import load_skill
@@ -47,6 +46,7 @@ class EstimateResponse(BaseModel):
     rejection: Optional[str] = None
     warnings: list[str] = []
     itemized_quote: Optional[list[dict]] = None
+    total: Optional[float] = None
     total_low: Optional[float] = None
     total_high: Optional[float] = None
 
@@ -56,20 +56,56 @@ async def estimate(
     requested_services: str = Form(...),
     zip_code: str = Form(""),
     images: list[UploadFile] = File(default=[]),
+    image_urls: str = Form(""),
     customer_name: str = Form(""),
     customer_email: str = Form(""),
     customer_phone: str = Form(""),
 ):
+    image_buffers = []
+    
+    # 1. Read files uploaded in the request
+    for img in images:
+        data = await img.read()
+        image_buffers.append({
+            "filename": img.filename or "photo.jpg",
+            "content_type": img.content_type,
+            "data": data,
+            "size": len(data)
+        })
+
+    # 2. Fetch files from provided image URLs
+    if image_urls:
+        urls = [u.strip() for u in image_urls.split(",") if u.strip()]
+        if urls:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                for url in urls:
+                    try:
+                        response = await client.get(url, follow_redirects=True)
+                        response.raise_for_status()
+                        data = response.content
+                        content_type = response.headers.get("content-type")
+                        parsed_url = urlparse(url)
+                        filename = posixpath.basename(parsed_url.path)
+                        if not filename:
+                            filename = "photo.jpg"
+                        image_buffers.append({
+                            "filename": filename,
+                            "content_type": content_type,
+                            "data": data,
+                            "size": len(data)
+                        })
+                    except Exception as e:
+                        logger.warning("Failed to fetch image from URL %s: %s", url, e)
+                        return EstimateResponse(
+                            status="rejected",
+                            rejection=f"Failed to download image from URL: {url} ({str(e)})"
+                        )
+
     try:
-        validate_estimate_request(requested_services, images, skill)
+        validate_estimate_request(requested_services, image_buffers, skill)
     except ValueError as e:
         logger.warning("Validation failed: %s", e)
         return EstimateResponse(status="rejected", rejection=str(e))
-
-    image_buffers = []
-    for img in images:
-        data = await img.read()
-        image_buffers.append({"filename": img.filename or "photo.jpg", "data": data})
 
     vision_ok, vision_msg = await analyze_images(image_buffers, skill)
     if not vision_ok:
@@ -90,3 +126,4 @@ async def estimate(
     result["status"] = "estimate"
 
     return EstimateResponse(**result)
+
