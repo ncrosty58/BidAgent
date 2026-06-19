@@ -112,38 +112,43 @@ prompts:
     Respond with ONLY a JSON object: {"appropriate": true/false, "reason": "explanation if not appropriate"}
 
   quote: |
-    For each requested service, classify the scope using the reference brackets below, but make your price estimate approximately 20% more aggressive (multiply the standard baseline low rate by 1.2 to compute the starting estimate):
+    For each requested service, assess the work required from the photos and determine the appropriate base estimate. Then, apply a +20% markup across the entire scale (multiply your dynamic assessment by 1.2) so that all prices, whether at baseline or adjusted upward for condition, are consistently 20% higher.
+
+    Use these standard baselines as your starting reference point (the baseline remains the starting point for clean properties, but the final output should be 1.2x the baseline):
 
     1. Driveway & Concrete Deep Clean:
-       - small_2_car: Standard 1-to-2 car width, short length (up to 30 feet). Baseline: $150. Estimate with +20% markup: $180.
-       - medium_4_car: Wide 3-to-4 car width or longer standard driveway (30-60 feet). Baseline: $250. Estimate with +20% markup: $300.
-       - large_circular: Circular driveways, very long estates (>60 feet), or large concrete parking pads. Baseline: $400. Estimate with +20% markup: $480.
-       - Calculation: If the driveway shows severe oil stains or heavy organic growth, adjust the estimate up by $50-$100 above the marked-up price.
+       - small_2_car: Baseline $150 (Output: $180)
+       - medium_4_car: Baseline $250 (Output: $300)
+       - large_circular: Baseline $400 (Output: $480)
+       - Work scaling: Evaluate size and condition (such as oil staining or heavy organic growth). Estimate the base cost for this level of effort, then scale the entire result up by 20% (+20% markup).
 
     2. Low-Pressure House Wash:
-       - townhome_1_story: Single story homes or narrow townhomes. Baseline: $200. Estimate with +20% markup: $240.
-       - suburban_2_story: Standard 2-story suburban homes. Baseline: $350. Estimate with +20% markup: $420.
-       - estate_large: 3+ stories, massive estate homes, or complex multi-level layouts. Baseline: $600. Estimate with +20% markup: $720.
-       - Calculation: If heavy green algae/mold is present on more than two sides, add $50-$100.
+       - townhome_1_story: Baseline $200 (Output: $240)
+       - suburban_2_story: Baseline $350 (Output: $420)
+       - estate_large: Baseline $600 (Output: $720)
+       - Work scaling: Assess height, multi-level complexity, and mildew buildup. Estimate the base cost for this level of effort, then scale the entire result up by 20% (+20% markup).
 
     3. Exterior Wood & Railing Repair:
-       - minor: 1-2 small steps, minor trim rot, or 1 simple railing panel. Baseline: $200. Estimate with +20% markup: $240.
-       - moderate: 3-5 boards or rails needing replacement, porch posts showing some decay. Baseline: $400. Estimate with +20% markup: $480.
-       - extensive: Entire porch/stoop structures, major railings reconstruction, or multiple rotted support columns. Baseline: $700. Estimate with +20% markup: $840.
-       - Calculation: Price based strictly on visible wood deterioration and structural safety.
+       - minor: Baseline $200 (Output: $240)
+       - moderate: Baseline $400 (Output: $480)
+       - extensive: Baseline $700 (Output: $840)
+       - Work scaling: Assess deterioration severity. Estimate the base cost for this level of effort, then scale the entire result up by 20% (+20% markup).
 
     4. Front Door & Accent Painting:
-       - flat_rate: Applies for a standard front door + framing. Baseline: $180. Estimate with +20% markup: $216. Add $50 for each set of accent shutters or columns requested/visible.
+       - flat_rate: Baseline $180 (Output: $216)
+       - Work scaling: Assess accent painting scope (such as front door, shutters, or columns). Estimate the base cost for this level of effort, then scale the entire result up by 20% (+20% markup).
 
     5. Bush Trimming & Dark Mulching:
-       - small_beds: Basic front entry flowerbeds, 1-2 small bushes. Baseline: $100. Estimate with +20% markup: $120.
-       - medium_beds: Front facade landscaping, 3-6 bushes requiring pruning and substantial mulching. Baseline: $220. Estimate with +20% markup: $264.
-       - full_property: Complete front, side, and rear landscaping areas, multiple overgrown trees/shrubs, large mulched areas. Baseline: $500. Estimate with +20% markup: $600.
+       - small_beds: Baseline $100 (Output: $120)
+       - medium_beds: Baseline $220 (Output: $264)
+       - full_property: Baseline $500 (Output: $600)
+       - Work scaling: Assess overgrowth density and mulch volume requirements. Estimate the base cost for this level of effort, then scale the entire result up by 20% (+20% markup).
 
     6. Premium Curb Class Hardware Bundle:
-       - flat_rate: Includes standard mailbox, house numbers, and front porch light. Baseline: $400. Estimate with +20% markup: $480.
+       - flat_rate: Baseline $400 (Output: $480)
+       - Work scaling: Estimate the base cost, then scale the entire result up by 20% (+20% markup).
 
-    Ensure you analyze the property photos to identify size/condition. Calculate a specific single estimated price for the work (which MUST be at least the +20% marked-up rate for the classified bracket). Determine the bracket name matching the workload.
+    Ensure you analyze the property photos to identify size/condition. Calculate a specific single estimated price for the work (which MUST be at least the +20% marked-up starting rate for the classified bracket and dynamically scaled upwards depending on the required effort). Determine the bracket name matching the workload.
     Generate an extremely concise (1 sentence, max 15 words) job description explaining what needs to be done. Do NOT include any price numbers or cost references in this description.
 
     For the overall response, produce TWO distinct summaries:
