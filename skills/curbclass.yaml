@@ -7,11 +7,10 @@
 # the basePrice string will be used as a fallback hint.
 
 name: curbclass
-version: "2.1"
+version: "2.2"
 description: "Curb Class — premium exterior home refresh. Driveways, landscaping, hardware, and complete entryway transformation."
 
 services:
-  # Matches CRM service: "Driveway & Concrete Deep Clean"
   Driveway & Concrete Deep Clean:
     display: "Driveway & Concrete Deep Clean"
     category: "Restoration"
@@ -29,7 +28,6 @@ services:
         low: 400
         high: 550
 
-  # Matches CRM service: "Low-Pressure House Wash"
   Low-Pressure House Wash:
     display: "Low-Pressure House Wash"
     category: "Cleaning"
@@ -47,7 +45,6 @@ services:
         low: 600
         high: 900
 
-  # Matches CRM service: "Exterior Wood & Railing Repair"
   Exterior Wood & Railing Repair:
     display: "Exterior Wood & Railing Repair"
     category: "Repairs"
@@ -65,7 +62,6 @@ services:
         low: 700
         high: 1200
 
-  # Matches CRM service: "Front Door & Accent Painting"
   Front Door & Accent Painting:
     display: "Front Door & Accent Painting"
     category: "Aesthetics"
@@ -73,7 +69,6 @@ services:
       low: 180
       high: 280
 
-  # Matches CRM service: "Bush Trimming & Dark Mulching"
   Bush Trimming & Dark Mulching:
     display: "Bush Trimming & Dark Mulching"
     category: "Landscaping"
@@ -91,7 +86,6 @@ services:
         low: 500
         high: 700
 
-  # Matches CRM service: "Premium Curb Class Hardware Bundle"
   Premium Curb Class Hardware Bundle:
     display: "Premium Curb Class Hardware Bundle"
     category: "Hardware"
@@ -113,7 +107,6 @@ validation:
   climate_check: true
 
 prompts:
-  # System prompt — tells the LLM what it is and how to behave
   system: |
     You are BidAgent, an expert exterior home estimator for Curb Class.
     Classify property exterior photos into size/cost brackets.
@@ -121,7 +114,6 @@ prompts:
     and condition of surfaces. Be realistic and conservative.
     If the photos are clearly not a home exterior, reject with explanation.
 
-  # Image validation prompt
   image_check: |
     You are a BidAgent image validator. Analyze the provided exterior property photos.
 
@@ -132,17 +124,16 @@ prompts:
 
     Respond with ONLY a JSON object: {"appropriate": true/false, "reason": "explanation if not appropriate"}
 
-  # Quote generation prompt
   quote: |
     For each requested service:
     1. Analyze the property photos to assess the amount of work required (e.g. estimate size/condition of driveway, height/stories of house, size of landscape beds, extent of wood rot/railing damage).
     2. Using the pricing guidelines in the price book (brackets and flat rates) as boundaries and base rates, calculate a specific, single estimated price (not a range) for the work. Be smart: do not just regurgitate the bracket boundaries; adjust the price dynamically within or slightly around the boundaries based on the visual complexity, size, and level of effort observed in the photos.
     3. Determine the bracket name that closest matches the workload.
-    4. Generate an extremely concise (1 sentence, max 15 words) job description explaining what needs to be done and how the specific price was calculated. This is the item-level description, shown to the customer alongside the price.
+    4. Generate an extremely concise (1 sentence, max 15 words) job description explaining what needs to be done. This is the item-level description, shown to the customer alongside the price. Do NOT include any price numbers or cost references in this description — focus purely on the work, scope, and effort.
 
     For the overall response, produce TWO distinct summaries:
 
-    - "description": A customer-facing executive summary of 2-3 sentences. Write this for the homeowner. Warm, benefit-oriented tone. Briefly describe what the job involves, why it matters for their home, and the key result they'll get. No pricing talk here — the itemized table handles that. Example: "Your home's curb appeal will get a complete refresh — from a driveway deep clean to fresh mulch and a new mailbox set. We'll restore your entryway's welcome with coordinated updates that make each detail feel intentional."
+    - "description": A customer-facing blurb of exactly 3-4 sentences. Write this for the homeowner. Start with a one-sentence description of their home and what you see in the photos (e.g. "Your 2-story brick home has a medium driveway and moderate landscaping beds."). Then 1-2 sentences listing every single requested service — do not omit any. End with a sentence about the transformation or result they can expect. Warm, benefit-oriented tone. No pricing talk. Make sure to mention hardware/installation services even though they aren't visible in the photos. Example: "Your home has a spacious driveway and well-established landscaping that's ready for a refresh. We'll deep clean the concrete, freshen the beds, install a new post mailbox and address plaque, and update your porch lights for a cohesive entryway. Every detail will feel intentional — from the curb to your doorstep."
 
     - "contractor_notes": An internal brief for the contractor/crew (1 paragraph, 3-5 sentences). Clinical, detail-oriented tone. Describe what the job actually entails on the ground — size/scope/condition observations from the photos, any tricky areas noted, and why the pricing came out the way it did (e.g. "4-car driveway with heavy oil staining — pricing reflects extended pressure washing time. House is 2 stories with moderate mildew above gutter line. Trim at rear railing shows rot requiring replacement on 2 sections.") This goes to Gotify notifications, CRM notes, and the owner email — never to the customer.
 
@@ -155,13 +146,13 @@ prompts:
           "service": "concrete_clean",
           "bracket": "medium_4_car",
           "label": "Driveway & Concrete Deep Clean",
-          "description": "4-car driveway shows moderate dirt; estimated at $310 based on cleaning effort.",
+          "description": "4-car driveway with moderate dirt buildup requiring thorough pressure washing.",
           "price": 310,
           "price_low": 310,
           "price_high": 310
         }
       ],
-      "description": "Customer-facing summary here — warm, benefit-oriented, 2-3 sentences.",
+      "description": "Customer-facing summary here — 3-4 sentences, starts with home description.",
       "contractor_notes": "Internal crew brief — clinical, detail-oriented, 3-5 sentences covering scope, observations, and pricing rationale.",
       "total": 1250,
       "total_low": 1250,

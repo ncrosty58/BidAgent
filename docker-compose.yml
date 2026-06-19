@@ -9,6 +9,7 @@ services:
     environment:
       - PORT=8000
     volumes:
+      - ./src:/app/src:ro
       - ./skills:/app/skills:ro
       - ./config/.env:/app/config/.env:ro
     restart: unless-stopped

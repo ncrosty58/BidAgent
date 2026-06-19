@@ -61,7 +61,7 @@ Respond with ONLY a JSON object as specified above."""
                 {"role": "user", "content": content_parts},
                 {"role": "user", "content": [{"type": "text", "text": full_prompt}]},
             ],
-            max_tokens=4000,
+            max_tokens=8192,
             temperature=0.2,
         )
         raw = response.choices[0].message.content or ""
@@ -109,7 +109,16 @@ Respond with ONLY a JSON object as specified above."""
                 chars.append(c)
         clean = "".join(chars)
         
-        result = json.loads(clean)
+        try:
+            result = json.loads(clean)
+        except json.JSONDecodeError as e:
+            import re
+            # Try fixing missing commas between fields
+            fixed = re.sub(r'(true|false|\d+|\]|")\s+\n?\s+"', r'\1,\n      "', clean)
+            try:
+                result = json.loads(fixed)
+            except:
+                raise e
         
         # Ensure single price fields are present and ranges match the single price
         if "itemized_quote" in result:
