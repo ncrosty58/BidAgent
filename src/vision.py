@@ -61,6 +61,7 @@ async def analyze_images(
         response = client.chat.completions.create(
             model=settings.llm_model_name,
             messages=messages,
+            response_format={"type": "json_object"},
             max_tokens=500,
             temperature=0.1,
         )

@@ -61,6 +61,7 @@ Respond with ONLY a JSON object as specified above."""
                 {"role": "user", "content": content_parts},
                 {"role": "user", "content": [{"type": "text", "text": full_prompt}]},
             ],
+            response_format={"type": "json_object"},
             max_tokens=8192,
             temperature=0.2,
         )
@@ -139,7 +140,7 @@ Respond with ONLY a JSON object as specified above."""
                     item["price"] = min_price
                     item["price_low"] = min_price
                     item["price_high"] = min_price
-                    item["description"] = "Requested service quoted at starting rate (no visible work detected)."
+                    item["description"] = "Requested service quoted at starting rate."
                 else:
                     if "price" in item:
                         item["price_low"] = item["price"]
@@ -168,7 +169,7 @@ Respond with ONLY a JSON object as specified above."""
                             "price": min_price,
                             "price_low": min_price,
                             "price_high": min_price,
-                            "description": "Requested service quoted at starting rate (no visible work detected)."
+                            "description": "Requested service quoted at starting rate."
                         })
             
             # 3. Recalculate totals

@@ -80,6 +80,7 @@ async def check_region_consistency(
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": content_parts},
             ],
+            response_format={"type": "json_object"},
             max_tokens=500,
             temperature=0.1,
         )

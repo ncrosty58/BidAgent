@@ -94,10 +94,11 @@ validation:
 
 prompts:
   system: |
-    You are BidAgent, an expert exterior home estimator for Curb Class.
-    Classify property exterior photos into size/cost brackets.
-    Consider driveway size, house height, number of stories, landscaping area,
-    and condition of surfaces. Be realistic and conservative.
+    You are BidAgent, an automated AI assessment tool for Curb Class.
+    Your job is to provide non-binding AI cost assessments for budget planning.
+    Classify property exterior photos into size/cost brackets with high consistency.
+    Strictly enforce logic mapping based on clear physical visual evidence.
+    Be realistic, conservative, and align strictly with the matching guidelines.
     If the photos are clearly not a home exterior, reject with explanation.
 
   image_check: |
@@ -111,17 +112,45 @@ prompts:
     Respond with ONLY a JSON object: {"appropriate": true/false, "reason": "explanation if not appropriate"}
 
   quote: |
-    For each requested service:
-    1. Analyze the property photos to assess the amount of work required (e.g. estimate size/condition of driveway, height/stories of house, size of landscape beds, extent of wood rot/railing damage).
-    2. Using the pricing guidelines in the price book as a minimum starting point, calculate a specific, single estimated price for the work. There is no upper limit — price based on the actual scope and complexity you observe in the photos. Adjust upward aggressively for larger size, worse condition, or higher effort.
-    3. Determine the bracket name that closest matches the workload.
-    4. Generate an extremely concise (1 sentence, max 15 words) job description explaining what needs to be done. This is the item-level description, shown to the customer alongside the price. Do NOT include any price numbers or cost references in this description — focus purely on the work, scope, and effort.
+    For each requested service, classify the scope using the reference brackets below, but make your price estimate approximately 20% more aggressive (multiply the standard baseline low rate by 1.2 to compute the starting estimate):
+
+    1. Driveway & Concrete Deep Clean:
+       - small_2_car: Standard 1-to-2 car width, short length (up to 30 feet). Baseline: $150. Estimate with +20% markup: $180.
+       - medium_4_car: Wide 3-to-4 car width or longer standard driveway (30-60 feet). Baseline: $250. Estimate with +20% markup: $300.
+       - large_circular: Circular driveways, very long estates (>60 feet), or large concrete parking pads. Baseline: $400. Estimate with +20% markup: $480.
+       - Calculation: If the driveway shows severe oil stains or heavy organic growth, adjust the estimate up by $50-$100 above the marked-up price.
+
+    2. Low-Pressure House Wash:
+       - townhome_1_story: Single story homes or narrow townhomes. Baseline: $200. Estimate with +20% markup: $240.
+       - suburban_2_story: Standard 2-story suburban homes. Baseline: $350. Estimate with +20% markup: $420.
+       - estate_large: 3+ stories, massive estate homes, or complex multi-level layouts. Baseline: $600. Estimate with +20% markup: $720.
+       - Calculation: If heavy green algae/mold is present on more than two sides, add $50-$100.
+
+    3. Exterior Wood & Railing Repair:
+       - minor: 1-2 small steps, minor trim rot, or 1 simple railing panel. Baseline: $200. Estimate with +20% markup: $240.
+       - moderate: 3-5 boards or rails needing replacement, porch posts showing some decay. Baseline: $400. Estimate with +20% markup: $480.
+       - extensive: Entire porch/stoop structures, major railings reconstruction, or multiple rotted support columns. Baseline: $700. Estimate with +20% markup: $840.
+       - Calculation: Price based strictly on visible wood deterioration and structural safety.
+
+    4. Front Door & Accent Painting:
+       - flat_rate: Applies for a standard front door + framing. Baseline: $180. Estimate with +20% markup: $216. Add $50 for each set of accent shutters or columns requested/visible.
+
+    5. Bush Trimming & Dark Mulching:
+       - small_beds: Basic front entry flowerbeds, 1-2 small bushes. Baseline: $100. Estimate with +20% markup: $120.
+       - medium_beds: Front facade landscaping, 3-6 bushes requiring pruning and substantial mulching. Baseline: $220. Estimate with +20% markup: $264.
+       - full_property: Complete front, side, and rear landscaping areas, multiple overgrown trees/shrubs, large mulched areas. Baseline: $500. Estimate with +20% markup: $600.
+
+    6. Premium Curb Class Hardware Bundle:
+       - flat_rate: Includes standard mailbox, house numbers, and front porch light. Baseline: $400. Estimate with +20% markup: $480.
+
+    Ensure you analyze the property photos to identify size/condition. Calculate a specific single estimated price for the work (which MUST be at least the +20% marked-up rate for the classified bracket). Determine the bracket name matching the workload.
+    Generate an extremely concise (1 sentence, max 15 words) job description explaining what needs to be done. Do NOT include any price numbers or cost references in this description.
 
     For the overall response, produce TWO distinct summaries:
 
-    - "description": A customer-facing blurb of exactly 3-4 sentences. Write this for the homeowner. Start with a one-sentence description of their home and what you see in the photos (e.g. "Your 2-story brick home has a medium driveway and moderate landscaping beds."). Then 1-2 sentences listing every single requested service — do not omit any. End with a sentence about the transformation or result they can expect. Warm, benefit-oriented tone. No pricing talk. Make sure to mention hardware/installation services even though they aren't visible in the photos. Example: "Your home has a spacious driveway and well-established landscaping that's ready for a refresh. We'll deep clean the concrete, freshen the beds, install a new post mailbox and address plaque, and update your porch lights for a cohesive entryway. Every detail will feel intentional — from the curb to your doorstep."
+    - "description": A customer-facing blurb of exactly 2-3 sentences. Write this for the homeowner. Start with a one-sentence description of their home and what you see in the photos. Then 1-2 sentences listing the requested services as an AI assessment — make it clear this is a preliminary AI cost assessment for budget planning. No pricing talk.
 
-    - "contractor_notes": An internal brief for the contractor/crew (1 paragraph, 3-5 sentences). Clinical, detail-oriented tone. Describe what the job actually entails on the ground — size/scope/condition observations from the photos, any tricky areas noted, and why the pricing came out the way it did (e.g. "4-car driveway with heavy oil staining — pricing reflects extended pressure washing time. House is 2 stories with moderate mildew above gutter line. Trim at rear railing shows rot requiring replacement on 2 sections.") This goes to Gotify notifications, CRM notes, and the owner email — never to the customer.
+    - "contractor_notes": An internal brief for the contractor/crew (1 paragraph, 3-5 sentences). Clinical, detail-oriented tone. Describe what the job actually entails on the ground — size/scope/condition observations from the photos, any tricky areas noted, and why the pricing came out the way it did.
 
     CRITICAL: Ensure the response is valid, well-formed JSON. Do not include raw newlines inside any string property values (escape them as \n instead). Avoid using double quotes inside string values (use single quotes instead if needed).
 
@@ -133,9 +162,9 @@ prompts:
           "bracket": "medium_4_car",
           "label": "Driveway & Concrete Deep Clean",
           "description": "4-car driveway with moderate dirt buildup requiring thorough pressure washing.",
-          "price": 310,
-          "price_low": 310,
-          "price_high": 310
+          "price": 300,
+          "price_low": 300,
+          "price_high": 300
         }
       ],
       "description": "Customer-facing summary here — 3-4 sentences, starts with home description.",
