@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import posixpath
 from pathlib import Path
@@ -80,7 +81,7 @@ async def estimate(
         urls = [u.strip() for u in image_urls.split(",") if u.strip()]
         if urls:
             async with httpx.AsyncClient(timeout=15.0) as client:
-                for url in urls:
+                async def fetch_url(url: str):
                     try:
                         response = await client.get(url, follow_redirects=True)
                         response.raise_for_status()
@@ -90,18 +91,27 @@ async def estimate(
                         filename = posixpath.basename(parsed_url.path)
                         if not filename:
                             filename = "photo.jpg"
-                        image_buffers.append({
+                        return {
                             "filename": filename,
                             "content_type": content_type,
                             "data": data,
                             "size": len(data)
-                        })
+                        }
                     except Exception as e:
-                        logger.warning("Failed to fetch image from URL %s: %s", url, e)
+                        return {"error": e, "url": url}
+
+                results = await asyncio.gather(*(fetch_url(url) for url in urls))
+
+                for res in results:
+                    if "error" in res:
+                        err_url = res["url"]
+                        err_e = res["error"]
+                        logger.warning("Failed to fetch image from URL %s: %s", err_url, err_e)
                         return EstimateResponse(
                             status="rejected",
-                            rejection=f"Failed to download image from URL: {url} ({str(e)})"
+                            rejection=f"Failed to download image from URL: {err_url} ({str(err_e)})"
                         )
+                    image_buffers.append(res)
 
     try:
         validate_estimate_request(requested_services, image_buffers, skill)
