@@ -150,12 +150,19 @@ Respond with ONLY a JSON object as specified above."""
                         item["price_high"] = item["price_low"]
             
             # 2. Add any requested services that the LLM completely omitted
-            existing_services = {item.get("service").lower() for item in result["itemized_quote"] if item.get("service")}
+            existing_services = set()
+            for item in result["itemized_quote"]:
+                if item.get("service"):
+                    existing_services.add(item.get("service").lower())
+                if item.get("label"):
+                    existing_services.add(item.get("label").lower())
+
             for requested in services_list:
                 pricing = next((p for p in price_book if p["name"].lower() == requested.lower() or p["display"].lower() == requested.lower()), None)
                 if pricing:
                     key = pricing["name"]
-                    if key.lower() not in existing_services:
+                    display_name = pricing.get("display", key)
+                    if key.lower() not in existing_services and display_name.lower() not in existing_services:
                         min_price = 150.0
                         if "flat_rate" in pricing:
                             min_price = float(pricing["flat_rate"]["low"])
@@ -164,7 +171,7 @@ Respond with ONLY a JSON object as specified above."""
                         
                         result["itemized_quote"].append({
                             "service": key,
-                            "label": pricing.get("display", key),
+                            "label": display_name,
                             "bracket": "standard",
                             "price": min_price,
                             "price_low": min_price,

@@ -1,4 +1,4 @@
-"""Price book — fetches live pricing from Twenty CRM with YAML bracket pricing as source of truth."""
+"""Price book — prefers Medusa pricing, then falls back to Twenty CRM and YAML defaults."""
 
 import logging
 import re
@@ -12,6 +12,11 @@ logger = logging.getLogger("bidagent.price")
 
 TWENTY_BASE_URL = settings.twenty_base_url
 TWENTY_TOKEN = settings.twenty_token
+MEDUSA_STORE_URL = settings.medusa_store_url.rstrip("/") if settings.medusa_store_url else ""
+MEDUSA_PUBLISHABLE_KEY = settings.medusa_publishable_key
+MEDUSA_REGION_ID = settings.medusa_region_id
+CF_ACCESS_CLIENT_ID = settings.cf_access_client_id
+CF_ACCESS_CLIENT_SECRET = settings.cf_access_client_secret
 
 
 def _parse_base_price(base_price_str: str) -> float | None:
@@ -25,7 +30,17 @@ def _parse_base_price(base_price_str: str) -> float | None:
 
 async def load_or_fetch_price_book(skill_def: dict) -> list[dict]:
     yaml_services = skill_def.get("services", {})
-    book = None
+    book = _yaml_to_book(yaml_services)
+
+    medusa_prices = await _load_medusa_service_prices(yaml_services)
+    if medusa_prices:
+        for entry in book:
+            price = medusa_prices.get(entry["name"])
+            if price is not None:
+                entry["basePrice"] = f"{price:.0f}"
+                entry["source"] = "medusa"
+        logger.info("Price book: %d services from Medusa", len(medusa_prices))
+        return book
 
     if TWENTY_BASE_URL and TWENTY_TOKEN:
         try:
@@ -46,10 +61,44 @@ async def load_or_fetch_price_book(skill_def: dict) -> list[dict]:
         except Exception as e:
             logger.warning("Twenty CRM pricebook fetch failed (%s) — using YAML", e)
 
-    if book is None:
-        book = _yaml_to_book(yaml_services)
-
     return book
+
+
+async def _load_medusa_service_prices(yaml_services: dict) -> dict[str, float]:
+    if not (MEDUSA_STORE_URL and MEDUSA_PUBLISHABLE_KEY and MEDUSA_REGION_ID):
+        return {}
+    wanted = {
+        (svc.get("medusa_handle") or name): name
+        for name, svc in yaml_services.items()
+    }
+    headers = {
+        "CF-Access-Client-Id": CF_ACCESS_CLIENT_ID,
+        "CF-Access-Client-Secret": CF_ACCESS_CLIENT_SECRET,
+        "x-publishable-api-key": MEDUSA_PUBLISHABLE_KEY,
+        "User-Agent": "bidagent/1.0",
+    }
+    async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+        resp = await client.get(
+            f"{MEDUSA_STORE_URL}/store/products",
+            headers=headers,
+            params={"limit": 200, "region_id": MEDUSA_REGION_ID},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+    prices: dict[str, float] = {}
+    for product in data.get("products", []):
+        svc_name = wanted.get(product.get("handle"))
+        if not svc_name:
+            continue
+        variant = (product.get("variants") or [{}])[0]
+        amount = (
+            (variant.get("calculated_price") or {}).get("calculated_amount")
+            or (variant.get("prices") or [{}])[0].get("amount")
+        )
+        if amount is not None:
+            prices[svc_name] = float(amount)
+    return prices
 
 
 def _merge_crm_with_yaml(crm_services: list[dict], yaml_services: dict) -> list[dict]:
@@ -65,6 +114,8 @@ def _merge_crm_with_yaml(crm_services: list[dict], yaml_services: dict) -> list[
             "basePrice": svc.get("basePrice", ""),
             "category": svc.get("category", yml.get("category", "")),
         }
+        if yml.get("medusa_handle"):
+            entry["medusa_handle"] = yml["medusa_handle"]
         if "flat_rate" in yml:
             entry["flat_rate"] = yml["flat_rate"]
         elif "brackets" in yml:
@@ -82,6 +133,10 @@ def _yaml_to_book(yaml_services: dict) -> list[dict]:
     book = []
     for name, svc in yaml_services.items():
         entry = {"name": name, "display": svc.get("display", name)}
+        if svc.get("medusa_handle"):
+            entry["medusa_handle"] = svc["medusa_handle"]
+        if svc.get("basePrice") is not None:
+            entry["basePrice"] = svc["basePrice"]
         if "flat_rate" in svc:
             entry["flat_rate"] = svc["flat_rate"]
         elif "brackets" in svc:

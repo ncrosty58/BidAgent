@@ -3,8 +3,8 @@
 # exterior home refresh estimating.
 #
 # Service names here MUST match the names in Twenty CRM (services object)
-# for cross-referencing. If CRM has a service without matching pricing here,
-# the basePrice string will be used as a fallback hint.
+# for cross-referencing. `medusa_handle` links each service to Medusa pricing,
+# and `basePrice` remains the fallback hint.
 
 name: curbclass
 version: "2.3"
@@ -14,6 +14,8 @@ services:
   Driveway & Concrete Deep Clean:
     display: "Driveway & Concrete Deep Clean"
     category: "Restoration"
+    medusa_handle: "driveway-concrete-deep-clean"
+    basePrice: "450"
     brackets:
       - name: small_2_car
         label: "Small (2-car driveway)"
@@ -28,6 +30,8 @@ services:
   Low-Pressure House Wash:
     display: "Low-Pressure House Wash"
     category: "Cleaning"
+    medusa_handle: "low-pressure-house-wash"
+    basePrice: "350"
     brackets:
       - name: townhome_1_story
         label: "Townhome / 1-story"
@@ -42,6 +46,8 @@ services:
   Exterior Wood & Railing Repair:
     display: "Exterior Wood & Railing Repair"
     category: "Repairs"
+    medusa_handle: "exterior-wood-railing-repair"
+    basePrice: "350"
     brackets:
       - name: minor
         label: "Minor (1-2 areas)"
@@ -56,12 +62,16 @@ services:
   Front Door & Accent Painting:
     display: "Front Door & Accent Painting"
     category: "Aesthetics"
+    medusa_handle: "front-door-accent-painting"
+    basePrice: "300"
     flat_rate:
       low: 180
 
   Bush Trimming & Dark Mulching:
     display: "Bush Trimming & Dark Mulching"
     category: "Landscaping"
+    medusa_handle: "bush-trimming-dark-mulching"
+    basePrice: "400"
     brackets:
       - name: small_beds
         label: "Small beds"
@@ -76,6 +86,8 @@ services:
   Premium Curb Class Hardware Bundle:
     display: "Premium Curb Class Hardware Bundle"
     category: "Hardware"
+    medusa_handle: "premium-curb-class-hardware-bundle"
+    basePrice: "650"
     flat_rate:
       low: 400
 
